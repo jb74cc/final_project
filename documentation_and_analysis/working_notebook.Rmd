@@ -1,0 +1,97 @@
+---
+title: "Final Project"
+output: html_notebook
+---
+
+```{r include=FALSE}
+# load libraries
+library(tidyverse)
+library(janitor)
+library(jsonlite)
+library(here)
+library(lubridate)
+library(leaflet)
+library(viridis)
+
+
+```
+
+```{r}
+# read in data and EDA
+jan_2019 <- fromJSON("../raw_data/just_eat_data/2019/01.json", flatten=TRUE)
+feb_2019 <- fromJSON("../raw_data/just_eat_data/2019/02.json", flatten=TRUE)
+mar_2019 <- fromJSON("../raw_data/just_eat_data/2019/03.json", flatten=TRUE)
+apr_2019 <- fromJSON("../raw_data/just_eat_data/2019/04.json", flatten=TRUE)
+may_2019 <- fromJSON("../raw_data/just_eat_data/2019/05.json", flatten=TRUE)
+jun_2019 <- fromJSON("../raw_data/just_eat_data/2019/06.json", flatten=TRUE)
+jul_2019 <- fromJSON("../raw_data/just_eat_data/2019/07.json", flatten=TRUE)
+aug_2019 <- fromJSON("../raw_data/just_eat_data/2019/08.json", flatten=TRUE)
+sep_2019 <- fromJSON("../raw_data/just_eat_data/2019/09.json", flatten=TRUE)
+oct_2019 <- fromJSON("../raw_data/just_eat_data/2019/10.json", flatten=TRUE)
+nov_2019 <- fromJSON("../raw_data/just_eat_data/2019/11.json", flatten=TRUE)
+dec_2019 <- fromJSON("../raw_data/just_eat_data/2019/12.json", flatten=TRUE)
+
+# bind all datasets together 
+hires_2019 <- list(jan_2019, feb_2019, mar_2019, apr_2019, may_2019, jun_2019, jul_2019,
+                   aug_2019, sep_2019, oct_2019, nov_2019, dec_2019) %>% 
+  bind_rows()
+
+
+# clean data
+# split date and time columns
+# change duration column into minutes
+# clean up time columns
+hires_2019_clean <- hires_2019 %>% 
+  separate(started_at, c("start_date", "start_time"), sep = " ") %>% 
+  separate(ended_at, c("end_date", "end_time"), sep = " ") %>% 
+  separate(start_time, "start_time", sep = "\\.") %>% 
+  separate(end_time, "end_time", sep = "\\.") %>% 
+  mutate(duration = round(duration / 60, 2),
+         start_date = date(start_date),
+         end_date = date(end_date),
+         start_station_id = as.factor(start_station_id),
+         end_station_id = as.factor(end_station_id))
+
+# check for NAs
+hires_2019_clean %>% 
+  is.na() %>% 
+  sum()
+
+
+# counting up the number of trips by station and adding to the main df
+hires_2019_clean_tib <- hires_2019_clean %>% # make df into a tibble
+  as_tibble(hires_2019_clean)
+
+trips_df <- hires_2019_clean_tib %>% 
+  group_by(start_station_id) %>% # get count of trips by station
+  count() %>% 
+  mutate(number_of_trips = n) # make new column of count
+
+trips_df <- trips_df %>% # delete count column
+  select(!n) 
+
+hires_2019_clean <- hires_2019_clean %>% # join data frames together again
+  left_join(trips_df)
+
+hires_2019_clean
+```
+
+```{r}
+
+pal <- colorFactor(
+  palette = viridis,
+  domain = hires_2019_clean$number_of_trips)
+
+
+hires_2019_clean %>% 
+  leaflet() %>% 
+  addProviderTiles(providers$CartoDB.Positron) %>% 
+  addTiles(providers$CartoDB.Positron) %>%
+  addCircles(lng = ~start_station_longitude,
+             lat = ~start_station_latitude,
+             color = ~ pal()(number_of_trips),
+             popup = ~paste0("Station ID: ", start_station_name),
+             radius = ~number_of_trips/25,
+)
+```
+
