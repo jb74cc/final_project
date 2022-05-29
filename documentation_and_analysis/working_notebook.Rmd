@@ -12,6 +12,10 @@ library(here)
 library(lubridate)
 library(leaflet)
 library(viridis)
+library(tsibbledata)
+library(tsibble)
+library(chron)
+
 
 
 ```
@@ -50,7 +54,10 @@ hires_2019_clean <- hires_2019 %>%
          start_date = date(start_date),
          end_date = date(end_date),
          start_station_id = as.factor(start_station_id),
-         end_station_id = as.factor(end_station_id))
+         end_station_id = as.factor(end_station_id),
+         start_time = chron(times=start_time),
+         end_time = chron(times=end_time))
+
 
 # check for NAs
 hires_2019_clean %>% 
@@ -76,6 +83,38 @@ hires_2019_clean <- hires_2019_clean %>% # join data frames together again
 hires_2019_clean
 ```
 
+
+
+```{r}
+# most popular start station based on number of trip originating there
+hires_2019_clean %>% 
+  group_by(start_station_id, number_of_trips) %>% 
+  count() %>% 
+  arrange(desc(n))
+```
+
+
+```{r}
+# visualising use by month
+hires_2019_clean %>% 
+  mutate(month = month(start_date, label = TRUE), .before = 1) %>% 
+  group_by(month) %>% 
+  summarise(count = n()) %>%
+  ggplot() +
+  aes(x = month, y = count) +
+  geom_col(fill = "blue") +
+  geom_text(aes(label = count), vjust = 2, colour = "white", size = 3) +
+  labs(x = "Month",
+       y = "Number of journeys",
+       title = "Total number of bike journeys by month (2019)") +
+  theme_minimal() +
+  theme(title = element_text(size = 14),
+        axis.text = element_text(size = 10),
+        axis.title.x = element_text(size = 10),
+        axis.title.y = element_text(size = 10))
+```
+
+
 ```{r}
 
 pal <- colorFactor(
@@ -89,9 +128,8 @@ hires_2019_clean %>%
   addTiles(providers$CartoDB.Positron) %>%
   addCircles(lng = ~start_station_longitude,
              lat = ~start_station_latitude,
-             color = ~ pal()(number_of_trips),
+             #color = ~ pal(number_of_trips),
              popup = ~paste0("Station ID: ", start_station_name),
-             radius = ~number_of_trips/25,
-)
+             radius = ~number_of_trips/25)
 ```
 
