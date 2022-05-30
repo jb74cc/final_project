@@ -15,6 +15,8 @@ library(tsibbledata)
 library(tsibble)
 library(elevatr)
 library(rgdal)
+library(circlize)
+library(ggraph)
 
 
 ```
@@ -47,16 +49,21 @@ hires_2019_clean %>%
   summarise(count = n()) %>%
   ggplot() +
   aes(x = month, y = count) +
-  geom_col(fill = "blue") +
-  geom_text(aes(label = count), vjust = 2, colour = "white", size = 3) +
-  labs(x = "Month",
-       y = "Number of journeys",
-       title = "Total number of bike journeys by month (2019)") +
+  geom_col(fill = "#F27F1B") +
+  geom_text(aes(label = count), vjust = 2, colour = "white", size = 3.5) +
+  labs(x = "\nMonth",
+       y = "Number of journeys\n",
+       title = "Total number of bike journeys by month (2019)\n") +
+  scale_y_discrete(expand = c(0,1), limits = c(0, 5000, 10000, 15000, 20000)) +
   theme_minimal() +
-  theme(title = element_text(size = 14),
+  theme(title = element_text(size = 12),
         axis.text = element_text(size = 10),
         axis.title.x = element_text(size = 10),
-        axis.title.y = element_text(size = 10))
+        axis.title.y = element_text(size = 10),
+        panel.grid.major = element_blank(), 
+        panel.grid.minor = element_blank(),
+        panel.background = element_blank(), 
+        axis.line = element_line(colour = "black"))
 ```
 
 
@@ -70,3 +77,44 @@ hires_2019_clean %>%
              popup = ~paste0("Station ID: ", start_station_name),
              radius = ~number_of_trips/25)
 ```
+```{r}
+# top 10 start and end stations
+hires_2019_clean %>% 
+  select(start_station_id, start_station_name) %>% 
+  count(start_station_id,start_station_name) %>% 
+  arrange(desc(n)) %>% 
+  head(10)
+
+hires_2019_clean %>% 
+  select(end_station_id, end_station_name) %>% 
+  count(end_station_id, end_station_name) %>% 
+  arrange(desc(n)) %>%
+  head(10)
+```
+
+
+```{r}
+hires_2019_clean %>% 
+  select(start_station_id, end_station_id) %>% 
+  filter(start_station_id == c("248", "259", "265", "262", "289", "257", "247", "249", "264", "290"), 
+         end_station_id == c("250", "248", "259", "366", "265", "262", "257", "264", "1026", "358")) %>% 
+  chordDiagram()
+  #chordDiagram(annotationTrack = c("name", "grid"))
+```
+
+```{r}
+hires_2019_clean %>% 
+  select(start_station_id, end_station_id) %>%
+  filter(start_station_id == c("248", "259", "265", "262", "289", "257", "247", "249", "264", "290"), 
+         end_station_id == c("250", "248", "259", "366", "265", "262", "257", "264", "1026", "358")) %>% 
+  ggraph(layout="linear") + 
+  geom_edge_arc(edge_colour="black", edge_alpha=0.3, edge_width=0.2) +
+  geom_node_point( color="#69b3a2", size=5) +
+  geom_node_text( aes(label=name), repel = FALSE, size=4, nudge_y=-5) +
+  theme_void() +
+  theme(
+    legend.position="none",
+    plot.margin=unit(rep(2,4), "cm")
+  )
+```
+

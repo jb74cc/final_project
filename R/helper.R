@@ -66,21 +66,6 @@ hires_2019_clean <- hires_2019 %>%
 hires_2019_clean_tib <- hires_2019_clean %>% # make df into a tibble
   as_tibble(hires_2019_clean)
 
-# get count of trips by station
-# make new column of count
-trips_df <- hires_2019_clean_tib %>% 
-  group_by(start_station_id) %>% 
-  count() %>% 
-  mutate(number_of_trips = n)
-
-# delete count column
-trips_df <- trips_df %>% 
-  select(!n) 
-
-# join data frames together again
-hires_2019_clean <- hires_2019_clean %>% 
-  left_join(trips_df)
-
 # merge hire and rainfall data sets
 hires_2019_clean <- hires_2019_clean %>% 
   inner_join(rain_2019, by = "start_date")
