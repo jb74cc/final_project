@@ -19,6 +19,7 @@ library(circlize)
 library(ggraph)
 
 
+
 ```
 
 ```{r}
@@ -74,14 +75,16 @@ hires_2019_clean %>%
   addTiles(providers$CartoDB.Positron) %>%
   addCircles(lng = ~start_station_longitude,
              lat = ~start_station_latitude,
-             popup = ~paste0("Station ID: ", start_station_name),
-             radius = ~number_of_trips/25)
+             popup = ~paste0("Station ID: ", start_station_name,
+                             "<br>Elevation (m): ", start_elevation))
 ```
+
+
 ```{r}
 # top 10 start and end stations
 hires_2019_clean %>% 
   select(start_station_id, start_station_name) %>% 
-  count(start_station_id,start_station_name) %>% 
+  count(start_station_id, start_station_name) %>% 
   arrange(desc(n)) %>% 
   head(10)
 
@@ -99,6 +102,7 @@ hires_2019_clean %>%
   filter(start_station_id == c("248", "259", "265", "262", "289", "257", "247", "249", "264", "290"), 
          end_station_id == c("250", "248", "259", "366", "265", "262", "257", "264", "1026", "358")) %>% 
   chordDiagram()
+  
   #chordDiagram(annotationTrack = c("name", "grid"))
 ```
 
@@ -107,14 +111,76 @@ hires_2019_clean %>%
   select(start_station_id, end_station_id) %>%
   filter(start_station_id == c("248", "259", "265", "262", "289", "257", "247", "249", "264", "290"), 
          end_station_id == c("250", "248", "259", "366", "265", "262", "257", "264", "1026", "358")) %>% 
-  ggraph(layout="linear") + 
-  geom_edge_arc(edge_colour="black", edge_alpha=0.3, edge_width=0.2) +
-  geom_node_point( color="#69b3a2", size=5) +
-  geom_node_text( aes(label=name), repel = FALSE, size=4, nudge_y=-5) +
+  ggraph(layout = "linear") + 
+  geom_edge_arc(edge_colour = "black", edge_alpha = 0.3, edge_width = 0.2) +
+  geom_node_point(color = "#F27F1B", size = 10) +
+  geom_node_text(aes(label = name), repel = FALSE, size = 3, nudge_y = 0, colour = "white") +
+  labs(title = "Journeys between most popular stations\n\n") +
   theme_void() +
-  theme(
-    legend.position="none",
-    plot.margin=unit(rep(2,4), "cm")
-  )
+  theme(title = element_text(size = 12),
+        legend.position = "none",
+        plot.margin = unit(rep(1, 4), "cm"))
 ```
+### Journeys based on elevation
+
+```{r}
+# downhill vs uphill vs flat journeys
+# based on elevation of start and end stations
+
+# 68153 downhill journeys
+hires_2019_clean %>% 
+  filter(elevation_diff < 0) %>% 
+  count()
+
+# 43499 uphill journeys
+hires_2019_clean %>% 
+  filter(elevation_diff > 0) %>% 
+  count()
+
+# 12032 flat journeys
+hires_2019_clean %>% 
+  filter(elevation_diff == 0) %>% 
+  count()
+```
+
+### Journeys based on weather
+
+```{r}
+# journeys based on rainfall
+# based on daily precipitation
+hires_2019_clean %>% 
+  filter(rainfall_mm >= 1) %>% 
+  count()
+
+hires_2019_clean %>% 
+  filter(rainfall_mm < 1) %>% 
+  count()
+```
+
+```{r}
+hires_2019_clean %>% 
+  select(start_date, rainfall_mm) %>% 
+  ggplot() +
+  geom_line(aes(start_date, rainfall_mm), col = "blue") +
+  geom_hline(yintercept = 1, col="red") +
+  labs(x = "\nDate",
+       y = "Rainfall (mm)\n",
+       title = "Edinburgh's daily rainfall in 2019",
+       subtitle = "(Red line at 1mm, above which class as rainy day)") +
+  theme_minimal() +
+  theme(title = element_text(size = 12),
+        axis.text = element_text(size = 10),
+        axis.title.x = element_text(size = 10),
+        axis.title.y = element_text(size = 10),
+        panel.grid.major = element_blank(), 
+        panel.grid.minor = element_blank(),
+        panel.background = element_blank(), 
+        axis.line = element_line(colour = "black"))
+```
+
+```{r}
+hires_2019_clean %>% 
+  filter(start_time > "06:00:00", start_time < "07:00:00")
+```
+
 

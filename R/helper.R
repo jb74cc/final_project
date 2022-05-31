@@ -50,21 +50,17 @@ rain_2019 <- rain_2019 %>%
 # change duration column into minutes
 # clean up time columns
 hires_2019_clean <- hires_2019 %>% 
-  separate(started_at, c("start_date", "start_time"), sep = " ") %>% 
-  separate(ended_at, c("end_date", "end_time"), sep = " ") %>% 
-  separate(start_time, "start_time", sep = "\\.") %>% 
-  separate(end_time, "end_time", sep = "\\.") %>% 
+  separate(started_at, c("start_date", "start_time"), sep = " ") %>%
+  separate(ended_at, c("end_date", "end_time"), sep = " ") %>%
+  separate(start_time, "start_time", sep = "\\.") %>%
+  separate(end_time, "end_time", sep = "\\.") %>%
   mutate(duration = round(duration / 60, 2),
          start_date = date(start_date),
          end_date = date(end_date),
          start_station_id = as.factor(start_station_id),
          end_station_id = as.factor(end_station_id),
-         start_time = chron(times=start_time),
-         end_time = chron(times=end_time))
-
-# counting up the number of trips by station and adding to the main df
-hires_2019_clean_tib <- hires_2019_clean %>% # make df into a tibble
-  as_tibble(hires_2019_clean)
+         start_time = chron(times. = start_time),
+         end_time = chron(times. = end_time))
 
 # merge hire and rainfall data sets
 hires_2019_clean <- hires_2019_clean %>% 
@@ -77,22 +73,32 @@ hires_2019_clean <- hires_2019_clean %>%
 # out put is a tibble
 elevation_data <- hires_2019_clean %>% 
   distinct(end_station_longitude, end_station_latitude, end_station_id) %>% 
-  select(end_station_longitude, end_station_latitude, end_station_id)
+  select(end_station_longitude, end_station_latitude, end_station_id) %>% 
+  mutate(station_id = end_station_id, .keep = "unused")
 
 # convert tibble to data.frame
 elevation <- as.data.frame(elevation_data) 
 
 # run data.frame through `elevatr` which outputs a SpatialPointsDataFrame
 # play around with `z` level to get the desired detail range is 5 - 14
-aws_elev <- get_elev_point(elevation, prj = "EPSG:4326", z = 12, src = "aws")
+aws_elev <- get_elev_point(elevation, prj = "EPSG:4326", z = 13, src = "aws")
 
 # convert SPDF generated above into data.frame again
 new_elevation <- as.data.frame(aws_elev) %>% 
-  select(end_station_id, elevation)
+  select(station_id, elevation) %>% 
+  distinct(station_id, .keep_all = TRUE)
 
 # joining the elevation data to main data set
 hires_2019_clean <- hires_2019_clean %>% 
-  full_join(new_elevation, by = "end_station_id")
+  inner_join(new_elevation, by = c("start_station_id" = "station_id")) %>% 
+  inner_join(new_elevation, by = c("end_station_id" = "station_id"))
+
+# rename elevation columns and create difference column based on difference between end and start elevations
+hires_2019_clean <- hires_2019_clean %>% 
+  mutate(start_elevation = elevation.x, end_elevation = elevation.y, .keep = "unused")
+
+hires_2019_clean <- hires_2019_clean %>% 
+  mutate(elevation_diff =  end_elevation - start_elevation)
 
 # remove NAs
 hires_2019_clean <- hires_2019_clean %>% 
