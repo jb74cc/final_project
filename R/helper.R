@@ -106,3 +106,5 @@ hires_2019_clean <- hires_2019_clean %>%
 
 # write data to clean file
 write_csv(hires_2019_clean, "clean_data/hires_2019_clean.csv")
+write_csv(rain_2019, "clean_data/rain_2019_clean.csv")
+
