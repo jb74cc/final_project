@@ -11,6 +11,8 @@ library(tsibble)
 library(chron)
 library(elevatr)
 library(rgdal)
+#library(rgeoboundaries)
+
 
 # read in data and EDA
 jan_2019 <- fromJSON("raw_data/just_eat_data/2019/01.json", flatten=TRUE)
@@ -82,6 +84,13 @@ elevation <- as.data.frame(elevation_data)
 # run data.frame through `elevatr` which outputs a SpatialPointsDataFrame
 # play around with `z` level to get the desired detail range is 5 - 14
 aws_elev <- get_elev_point(elevation, prj = "EPSG:4326", z = 13, src = "aws")
+
+# creating data for raster
+# elevation_raster <- get_elev_raster(locations = aws_elev, z = 9, clip = "locations")
+# new_elevation_raster <- as.data.frame(elevation_raster, xy = TRUE)
+# colnames(new_elevation_raster)[3] <- "elevation"
+# # remove rows of data frame with one or more NA's,using complete.cases
+# new_elevation_raster <- new_elevation_raster[complete.cases(new_elevation_raster), ]
 
 # convert SPDF generated above into data.frame again
 new_elevation <- as.data.frame(aws_elev) %>% 

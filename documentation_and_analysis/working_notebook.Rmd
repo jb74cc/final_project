@@ -9,20 +9,17 @@ editor_options:
 # load libraries
 library(tidyverse)
 library(janitor)
-library(jsonlite)
 library(here)
 library(lubridate)
 library(leaflet)
-library(tsibbledata)
-library(tsibble)
 library(elevatr)
 library(rgdal)
 library(circlize)
 library(ggraph)
 library(infer)
-
-
-
+library(sf)
+library(rgeoboundaries)
+library(mapdeck)
 
 ```
 
@@ -30,6 +27,7 @@ library(infer)
 # Load in data
 hires_2019_clean <- read_csv('../clean_data/hires_2019_clean.csv')
 rain_2019_clean <- read_csv('../clean_data/rain_2019_clean.csv')
+
 
 ```
 
@@ -73,6 +71,36 @@ hires_2019_clean %>%
         axis.line = element_line(colour = "black"))
 
 ```
+
+```{r}
+# visualise use by day of the week
+
+hires_2019_clean %>% 
+  mutate(day = wday(start_date, label = TRUE), .before = 1) %>% 
+  group_by(day) %>% 
+  summarise(count = n()) %>%
+  ggplot() +
+  aes(x = day, y = count) +
+  geom_col(fill = "#F27F1B") +
+  geom_text(aes(label = count), vjust = 2, colour = "white", size = 3.5) +
+  labs(x = "\nDay of week",
+       y = "Number of journeys\n",
+       title = "Total number of bike journeys by day of week (2019)") +
+  scale_y_discrete(expand = c(0,1), limits = c(0, 5000, 10000, 15000)) +
+  theme_minimal() +
+  theme(title = element_text(size = 12),
+        axis.text = element_text(size = 10),
+        axis.title.x = element_text(size = 10),
+        axis.title.y = element_text(size = 10),
+        panel.grid.major = element_blank(), 
+        panel.grid.minor = element_blank(),
+        panel.background = element_blank(), 
+        axis.line = element_line(colour = "black"))
+```
+
+
+### Mapping out stations
+
 ```{r}
 # create smaller dataset for map
 map_data <- hires_2019_clean %>% 
@@ -82,16 +110,28 @@ map_data <- hires_2019_clean %>%
 
 
 ```{r}
+
+# create custom icon for bike hire stations
+bike  <-  makeIcon("../www/bicycle-outline.png")
+
+# map station data using leaflet app
 map_data %>% 
   leaflet() %>% 
   addProviderTiles(providers$CartoDB.Positron) %>% 
   addTiles(providers$CartoDB.Positron) %>%
-  addCircles(lng = ~start_station_longitude,
-             lat = ~start_station_latitude,
-             color = "#F27F1B",
+  addMarkers(~start_station_longitude, ~start_station_latitude, 
+             icon = ~bike,
+             #clusterOptions = markerClusterOptions(),
              popup = ~paste0("Station ID: ", start_station_id,
-                             "<br>Name: ", start_station_name,
-                             "<br>Elevation (m): ", start_elevation))
+                              "<br>Name: ", start_station_name,
+                              "<br>Elevation (m): ", start_elevation))
+
+  # addCircles(lng = ~start_station_longitude,
+  #            lat = ~start_station_latitude,
+  #            color = "#F27F1B",
+  #            popup = ~paste0("Station ID: ", start_station_id,
+  #                            "<br>Name: ", start_station_name,
+  #                            "<br>Elevation (m): ", start_elevation))
 ```
 
 ### Most popular stations
@@ -114,18 +154,106 @@ hires_2019_clean %>%
 
 
 ```{r}
+# round trip vs a to b journey
+hires_2019_clean %>% 
+  filter(start_station_id == end_station_id) %>% 
+  count()
+
+hires_2019_clean %>% 
+  filter(start_station_id != end_station_id) %>% 
+  count()
+
+```
+
+
+```{r}
+# map most popular stations data using leaflet app
+map_data %>% 
+  filter(start_station_id %in% c("248", "259", "265", "289", "257", 
+                                 "249", "247", "171", "183", "262", 
+                                 "250", "358", "258")) %>%
+  leaflet() %>% 
+  addProviderTiles(providers$CartoDB.Positron) %>% 
+  addTiles(providers$CartoDB.Positron) %>%
+  addMarkers(~start_station_longitude, ~start_station_latitude, 
+             icon = ~bike,
+             popup = ~paste0("Station ID: ", start_station_id,
+                             "<br>Name: ", start_station_name,
+                             "<br>Elevation (m): ", start_elevation))
+
+```
+
+```{r}
+map_data %>% 
+  filter(start_station_id %in% c("248", "259", "265", "289", "257", 
+                                 "249", "247", "171", "183", "262", 
+                                 "250", "358", "258")) %>% 
+  ggplot(label = start_station_id) +
+  geom_point(aes(start_station_id, start_elevation)) +
+  theme_bw() +
+  geom_text(aes(start_station_id, start_elevation, label = start_elevation, hjust=-0.2, vjust=0))
+
+```
+
+```{r}
+library(mapdeck)
+
+set_token("pk.eyJ1IjoiamI3NCIsImEiOiJjbDN4Nm52OGMwZ3pnM2NxdHhlMThxanA0In0.iFNcOguU6rkUQEhGruqSBg")  ## set your mapbox token here
+#set_token("pk.eyJ1IjoiamI3NCIsImEiOiJjbDN4Nm52OGMwZ3pnM2NxdHhlMThxanA0In0.iFNcOguU6rkUQEhGruqSBg")  ## set your mapbox token here
+
+#mapdeck_tokens()
+
+hires_2019_clean %>% 
+filter(start_station_id %in% c("248")) %>% 
+  na.omit() %>% 
+mapdeck(style = mapdeck_style('dark'), pitch = 45,
+        location = c(55.942, -3.199))%>%
+  add_arc(
+      layer_id = 'arc_layer'
+    , origin = c("start_station_longitude", "start_station_latitude")
+    , destination = c("end_station_longitude", "end_station_latitude")
+    , stroke_from_opacity = 100
+    , stroke_to_opacity = 100
+    , stroke_width = 3
+    , stroke_from = "#F27F1B"
+    , stroke_to = "black"
+  )
+
+#"259", "265", "289", "257", "249", "247", "171", "183", "262", "250", "358", "258"
+```
+
+
+```{r}
 hires_2019_clean %>% 
   select(start_station_id, end_station_id) %>% 
   filter(start_station_id == c("248", "259", "265", "289", "257", "262", "249", "247", "171", "183"), 
          end_station_id == c("262", "257", "250", "265", "248", "358", "259", "183", "171", "258")) %>% 
   chordDiagram(scale = TRUE)
   
-  #chordDiagram(annotationTrack = c("name", "grid"))
 ```
+
 ```{r}
+# Journeys ending at Victoria Quay
 hires_2019_clean %>% 
-  filter(start_station_id == "171", end_station_id == "171") %>% 
+  filter(end_station_id == "250") %>% 
   count()
+
+# Journeys ending at Victoria Quay, by start station
+hires_2019_clean %>% 
+  filter(end_station_id == "250") %>% 
+  count(start_station_id) %>% 
+  arrange(desc(n))
+
+# Journeys ending at George Square, by start station
+hires_2019_clean %>% 
+  filter(end_station_id == "171") %>% 
+  count(start_station_id) %>% 
+  arrange(desc(n))
+
+hires_2019_clean %>% 
+  filter(start_station_id == "259") %>% 
+  count(end_station_id) %>% 
+  arrange(desc(n))
 ```
 
 
@@ -145,6 +273,8 @@ hires_2019_clean %>%
         legend.position = "none",
         plot.margin = unit(rep(1, 4), "cm"))
 ```
+
+
 ### Journeys based on elevation
 
 68622 downhill journeys
@@ -169,6 +299,9 @@ hires_2019_clean %>%
 hires_2019_clean %>% 
   filter(elevation_diff == 0) %>% 
   count()
+```
+```{r}
+get_elev_raster()
 ```
 
 
@@ -201,16 +334,44 @@ hires_2019_clean %>%
 
 ### Hypothesis Test
 
-α = 0.05
-H0 - Rain makes no difference to bike hires (number of journeys on rainy days - number of journeys on non rainy days = 0)
-H1 - Rain has an impact on bike hires (number of journeys on non rainy days - number of journeys on rainy days > 0)
+```{r}
+# Independence Hypothesis
+# α = 0.05
+# H0 - uphill journeys makes no difference to bike hires
+# H1 - uphill journeys have an impact on bike hires
 
-Type of test is one-sample proportion, right-sided.
+# organise the data so I have an uphill column with a logical output TRUE/FALSE if the elevation change was positive
+# also count the number of journeys that occurred on each day
+uphill <- hires_2019_clean %>%
+  group_by(start_date) %>% 
+  mutate(uphill = elevation_diff > 0) %>%
+  select(start_date, uphill) %>% 
+  count(start_date, uphill)
 
-p value = 0 
+# create a null distribution permuting the True and False values on whether the journey was uphill or not
+# do 10k reps and check the difference in means of the groups
+null_distribution <- uphill %>% 
+  specify(n ~ uphill) %>%
+  hypothesize(null = "independence") %>% 
+  generate(reps = 10000, type = "permute") %>% 
+  calculate(stat = "diff in means", order = c("TRUE", "FALSE")) 
 
-The p-value being near to 0 means it is less than α, and so we should reject H0 based on our data. The result is statistically significant in favour of H1, that rain may imapct bike hire numbers.
+# create an observed stat
+observed_stat <- uphill %>% 
+  specify(n ~ uphill) %>%
+  calculate(stat = "diff in means", order = c("TRUE", "FALSE")) 
 
+# plot observed stat on the null distribution
+null_distribution %>%
+  visualise() +
+  shade_p_value(obs_stat = observed_stat, direction = "left")
+
+# calculate the p-value and compare to α value
+p_value <- null_distribution %>%
+  get_p_value(obs_stat = observed_stat, direction = "left")
+
+p_value
+```
 
 
 ```{r}
@@ -218,29 +379,34 @@ The p-value being near to 0 means it is less than α, and so we should reject H0
 # α = 0.05
 # H0 - Rain makes no difference to bike hires
 # H1 - Rain has an impact on bike hires
+# Type of test is one-sample proportion, right-sided.
+# 
+# p value = 0 
+# 
+# The p-value being near to 0 means it is less than α, and so we should reject H0 based on our data. The result is statistically significant in favour of H1, that rain may impact bike hire numbers.
 
-rain_day <- hires_2019_clean %>%
-  group_by(start_date) %>% 
-  mutate(rain_day = rainfall_mm >= 1) %>% 
-  select(start_date, rain_day) %>% 
-  count(start_date, rain_day)
-
-null_distribution <- rain_day %>%
-  specify(response = rain_day, success = "TRUE") %>%
-  hypothesize(null = "point", p = 0.05) %>%
-  generate(reps = 10000, type = "draw") %>%
-  calculate(stat = "prop")
-
-obs_stat <- rain_day %>%
-  specify(response = rain_day, success = "TRUE") %>%
-  calculate(stat = "prop")
-
-null_distribution %>%
-  visualise() +
-  shade_p_value(direction = "right", obs_stat = obs_stat)
-
-null_distribution %>%
-  get_p_value(direction = "right", obs_stat = obs_stat)
+# rain_day <- hires_2019_clean %>%
+#   group_by(start_date) %>% 
+#   mutate(rain_day = rainfall_mm >= 1) %>% 
+#   select(start_date, rain_day) %>% 
+#   count(start_date, rain_day)
+# 
+# null_distribution <- rain_day %>%
+#   specify(response = rain_day, success = "TRUE") %>%
+#   hypothesize(null = "point", p = 0.05) %>%
+#   generate(reps = 10000, type = "draw") %>%
+#   calculate(stat = "prop")
+# 
+# obs_stat <- rain_day %>%
+#   specify(response = rain_day, success = "TRUE") %>%
+#   calculate(stat = "prop")
+# 
+# null_distribution %>%
+#   visualise() +
+#   shade_p_value(direction = "right", obs_stat = obs_stat)
+# 
+# null_distribution %>%
+#   get_p_value(direction = "right", obs_stat = obs_stat)
 
 ```
 
@@ -250,21 +416,72 @@ null_distribution %>%
 # H0 - Rain makes no difference to bike hires
 # H1 - Rain has an impact on bike hires
 
-rain_day_flag <- rain_day %>%
-  mutate(rain_day_flag = if_else(rain_day == "TRUE", 1, 0))
+# rain_day_flag <- rain_day %>%
+#   mutate(rain_day_flag = if_else(rain_day == "TRUE", 1, 0))
+# 
+# null_distribution <- rain_day_flag %>%
+#   specify(response = rain_day_flag) %>%
+#   hypothesize(null = "point", mu = 0.05) %>%
+#   generate(reps = 10000, type = "bootstrap") %>%
+#   calculate(stat = "mean")
+# 
+# null_distribution %>%
+#   visualise() +
+#   shade_p_value(direction = "right", obs_stat = obs_stat)
+# 
+# null_distribution %>%
+#   get_p_value(direction = "right", obs_stat = obs_stat)
+```
 
-null_distribution <- rain_day_flag %>%
-  specify(response = rain_day_flag) %>%
-  hypothesize(null = "point", mu = 0.05) %>%
-  generate(reps = 10000, type = "bootstrap") %>%
-  calculate(stat = "mean")
+### Independence Hypothesis Test On Rainy day data
 
+Does a rainy day have an effect on bike hires
+
+α = 0.05
+H0 - Rain makes no difference to bike hires
+H1 - Rain has an impact on bike hires
+
+The p-value ≤ α, so I reject the null hypothesis H0 in favour of the alternative hypothesis H1, 
+that rain _may_ have an effect on bike hires.
+
+```{r}
+# Independence Hypothesis
+# α = 0.05
+# H0 - Rain makes no difference to bike hires
+# H1 - Rain has an impact on bike hires
+
+# organise the data so I have a rain_day column with a logical output TRUE/FALSE if it rained that day
+# also count the number of journeys that occurred on each day
+rain_day <- hires_2019_clean %>%
+  group_by(start_date) %>% 
+  mutate(rain_day = rainfall_mm >= 1) %>% 
+  select(start_date, rain_day) %>% 
+  count(start_date, rain_day)
+
+# create a null distribution permuting the True and False values on whether it rained
+# do 10k reps and check the difference in means of the groups
+null_distribution <- rain_day %>% 
+  specify(n ~ rain_day) %>%
+  hypothesize(null = "independence") %>% 
+  generate(reps = 10000, type = "permute") %>% 
+  calculate(stat = "diff in means", order = c("TRUE", "FALSE")) 
+
+# create an observed stat
+observed_stat <- rain_day %>% 
+  specify(n ~ rain_day) %>%
+  calculate(stat = "diff in means", order = c("TRUE", "FALSE")) 
+
+# plot observed stat on the null distribution
 null_distribution %>%
   visualise() +
-  shade_p_value(direction = "right", obs_stat = obs_stat)
+  shade_p_value(obs_stat = observed_stat, direction = "left")
 
-null_distribution %>%
-  get_p_value(direction = "right", obs_stat = obs_stat)
+# calculate the p-value and compare to α value
+p_value <- null_distribution %>%
+  get_p_value(obs_stat = observed_stat, direction = "left")
+
+p_value
+
 ```
 
 Rainy Days in 2019 = 181
@@ -371,3 +588,14 @@ hires_2019_clean %>%
         panel.background = element_blank(), 
         axis.line = element_line(colour = "black"))
 ```
+
+```{r}
+# trying a raster image of elevation
+ggplot() +
+  geom_raster(data = new_elevation_raster, aes(x = x, y = y)) +
+  geom_sf(data = elevation_raster, color = "white") +
+  coord_sf() +
+  scale_fill_viridis_c() +
+  labs(title = " ", x = " ", y = " ", fill = " ")
+```
+
