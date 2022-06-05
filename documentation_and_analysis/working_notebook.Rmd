@@ -159,9 +159,33 @@ hires_2019_clean %>%
   filter(start_station_id == end_station_id) %>% 
   count()
 
+11944 / 124446 * 100 # 9.6% of journeys were round trips
+
+# most popular round trip stations
 hires_2019_clean %>% 
-  filter(start_station_id != end_station_id) %>% 
-  count()
+  filter(start_station_id == end_station_id) %>% 
+  count(start_station_id) %>% 
+  arrange(desc(n))
+
+# visualise round trip vs one ways
+hires_2019_clean %>% 
+  mutate(round_trips = start_station_id == end_station_id) %>% 
+  count(round_trips) %>% 
+  ggplot() +
+  aes(round_trips, n) +
+  geom_col(fill = "#F27F1B") +
+  labs(x = "\nOne Way vs Round Trip",
+       y = "Number of journeys\n",
+       title = "One Way vs Round Trip journeys taken") +
+  theme_minimal() +
+  theme(title = element_text(size = 12),
+        axis.text = element_text(size = 10),
+        axis.title.x = element_text(size = 10),
+        axis.title.y = element_text(size = 10),
+        panel.grid.major = element_blank(), 
+        panel.grid.minor = element_blank(),
+        panel.background = element_blank(), 
+        axis.line = element_line(colour = "black"))
 
 ```
 
@@ -216,7 +240,7 @@ mapdeck(style = mapdeck_style('dark'), pitch = 45,
     , stroke_to_opacity = 100
     , stroke_width = 3
     , stroke_from = "#F27F1B"
-    , stroke_to = "black"
+    , stroke_to = "#F27F1B"
   )
 
 #"259", "265", "289", "257", "249", "247", "171", "183", "262", "250", "358", "258"
@@ -285,20 +309,26 @@ hires_2019_clean %>%
 # downhill vs uphill vs flat journeys
 # based on elevation of start and end stations
 
-# 68622 downhill journeys
+# 68622 downhill journeys 55%
 hires_2019_clean %>% 
   filter(elevation_diff < 0) %>% 
   count()
 
-# 43774 uphill journeys
+68622 / 124446 * 100
+
+# 43774 uphill journeys 35%
 hires_2019_clean %>% 
   filter(elevation_diff > 0) %>% 
   count()
 
-# 12050 flat journeys
+43774 / 124446 * 100
+
+# 12050 flat journeys 9.7%
 hires_2019_clean %>% 
   filter(elevation_diff == 0) %>% 
   count()
+
+12050 / 124446 * 100
 ```
 ```{r}
 get_elev_raster()
@@ -485,8 +515,8 @@ p_value
 ```
 
 Rainy Days in 2019 = 181
-Rainy journeys = 58073
-Non rainy journeys = 66373
+Rainy journeys = 58073 (46.7%)
+Non rainy journeys = 66373 (53.3%)
 
 ```{r}
 # count the number of days with rainfall equal to or over 1mm
@@ -500,9 +530,13 @@ hires_2019_clean %>%
   filter(rainfall_mm >= 1) %>% 
   count()
 
+58073 / 124446 * 100
+
 hires_2019_clean %>% 
   filter(rainfall_mm < 1) %>% 
   count()
+
+66373 / 124446 * 100
 ```
 
 
