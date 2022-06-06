@@ -1,0 +1,79 @@
+---
+title: "Final project documentation - PDA"
+author: "Jerry Balloch"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    theme: cosmo
+    number_sections: false
+    df_print: paged
+---
+
+# Just Eat Cycle Hire Scheme
+
+## Context
+
+#### Business intelligence and data-driven decision making 
+(1.1 Business intelligence and data-driven decision making)
+
+What insights can the business/organisation gain from your analysis and how will your analysis help the business/organisation make better decisions? 
+
+#### Domain knowledge and the business context 
+(1.2 Domain knowledge and the business context)
+
+Just Eat Cycles was a bike hire scheme that ran in Edinburgh from 2018 to 2021. The scheme was operated by a company called Serco with Just Eat coming onboard as the sponsor. There was a fleet of 500 pedal bikes and 150 eBikes deployed to 164 stations across Edinburgh. Customers had the option of paying per ride, per day or taking out an annual subscription to use the service. The scheme although popular came to an end in September 2021 with Serco citing issues such as vandalism of bikes and stations as part of the reason not to continue. Edinburgh Council are stiil trying to work out a way to bring the scheme back to the streets.
+
+## Data
+
+#### Internal and external data sources 
+(1.4 Internal and external data sources, 2.1 Tools for querying data sources,    
+4.7 Role of domain knowledge in interpreting analyses)
+
+The data used in this analysis came from the hire scheme detailing hires from 2019. It is open data and has obviously been pared back from the actual data gathered as it only contains trip dates, start and end points, station ids and names and trip durations. No personal information was contained in the data. For a deeper analysis it would be nice to have some more in depth data such as gender and age splits of the people using the service along with subscription vs single ride info, perhaps also route info for each journey to see what routes if any were especially popular.
+
+To add some extra dimensions I downloaded weather data for the period to see if it had any impact on hires. I also managed to get the elevation details for each bike hire station using their longitude and latitude coordinates, pulling the info from aws terrain servers.
+
+#### Types of data 
+(2.2 Types of data (categorical and numerical data and their sub-types))
+
+Once I had all my data cleaned and compiled together I was dealing with a mixture of date/time variables for the start and end dates and times. There were also character variables for station names and descriptions. Numeric variables made up the balance of the rest of the columns for things like lat/long coordinates, journey durations, station elevations etc. I converted the station ids to factors.
+
+#### Data formats 
+(2.3 Data formats)
+
+The data was supplied in .json format with a separate file for each month in 2019. Weather data was downloaded from the web in .csv format and the elevation data was scraped from aws as a Spatial Points Data Frame which I then converted to a regular data frame to incorporate with the rest of the data.
+
+#### Data quality and bias 
+(1.5 Data quality, 2.6 Data quality including data bias)
+
+The data contained only trip information with no personal info included so although a little thin, did not in my opinion contain any bias.
+
+## Ethics 
+(1.9 Ethical implications of business requirements, 2.7 Ethical issues in data sourcing and extraction)
+
+I don't have any ethical concerns with the capture or use of this data as there is no way of identifying an individual from the data, and the data was supplied by the organisation involved.
+
+## Analysis
+
+#### Stages in the data analysis process 
+(1.6 Stages in the data analysis process)
+
+The main stages in my data analysis process were intitally to bind the 12 monthly data sets together to make one year long set. I then had to split the `started at` variable into `start date` and `start time`, the same for `ended at`. The `duration` variable was in seconds so I mutated it in to minutes and rounded to 2 decimal points. The start and end dates and times all needed to be converted to date/time varibes as they were still character variables.
+
+Next I joined in the rainfall data that I had sourced from `power.larc.nasa.gov/data-access-viewer/`. I joined the data on `start date` to join the days rainfall in the correct places.
+
+Finally I joined in the elevation data for the various stations that I had pulled from `aws` at `registry.opendata.aws/terrain-tiles/`.
+
+#### Tools for data analysis 
+(1.10 Tools for data analysis)
+
+The main tools I used for my analysis were `R Studio` for the importing, cleaning and analysing of the data. I used Chrome to look for and access the other data to merege with the original data set. I used `Affinity Designer` for some of the work for the presentation and `Keynote` to put together the slides.
+
+#### Descriptive, diagnostic, predictive and prescriptive analysis 
+(1.7 Descriptive, diagnostic, predictive and prescriptive analysis)
+
+
+**Descriptive Analytics** were used to understand bike hires from 2019. I analysed use by time of day, duration, location. I also looked at the relationship between some stations, if journeys were A to B or round trips etc.
+
+I used **Diagnostic Analytics** in the form of a Hypothesis Test to determine if weather, specifically rainfall, had an effect of bike hires.
