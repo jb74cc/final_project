@@ -68,6 +68,10 @@ hires_2019_clean <- hires_2019 %>%
 hires_2019_clean <- hires_2019_clean %>% 
   inner_join(rain_2019, by = "start_date")
 
+hires_2019_no_liv <- hires_2019_clean %>% 
+  filter(end_station_id != 280)
+  
+
 #--------------------------------------------------------------------
 
 # work out elevation data
@@ -78,22 +82,34 @@ elevation_data <- hires_2019_clean %>%
   select(end_station_longitude, end_station_latitude, end_station_id) %>% 
   mutate(station_id = end_station_id, .keep = "unused")
 
+elevation_data_edi <- hires_2019_no_liv %>% 
+  distinct(end_station_longitude, end_station_latitude, end_station_id) %>% 
+  #select(end_station_longitude, end_station_latitude, end_station_id) %>% 
+  mutate(station_id = end_station_id, .keep = "unused")
+
 # convert tibble to data.frame
 elevation <- as.data.frame(elevation_data) 
+
+elevation_edi <- as.data.frame(elevation_data_edi)
+
 
 # run data.frame through `elevatr` which outputs a SpatialPointsDataFrame
 # play around with `z` level to get the desired detail range is 5 - 14
 aws_elev <- get_elev_point(elevation, prj = "EPSG:4326", z = 13, src = "aws")
 
+aws_elev_edi <- get_elev_point(elevation_edi, prj = "EPSG:4326", z = 9, src = "aws")
+
+
 # creating data for raster
-# elevation_raster <- get_elev_raster(locations = aws_elev, z = 9, clip = "locations")
-# new_elevation_raster <- as.data.frame(elevation_raster, xy = TRUE)
-# colnames(new_elevation_raster)[3] <- "elevation"
-# # remove rows of data frame with one or more NA's,using complete.cases
-# new_elevation_raster <- new_elevation_raster[complete.cases(new_elevation_raster), ]
+elevation_raster <- get_elev_raster(locations = aws_elev_edi, z = 9)
+new_elevation_raster <- as.data.frame(elevation_raster, xy = TRUE)
+colnames(new_elevation_raster)[3] <- "elevation"
+#remove rows of data frame with one or more NA's,using complete.cases
+new_elevation_raster <- new_elevation_raster %>%
+ na.omit()
 
 # convert SPDF generated above into data.frame again
-new_elevation <- as.data.frame(aws_elev) %>% 
+new_elevation <- as.data.frame(aws_elev_edi) %>% 
   select(station_id, elevation) %>% 
   distinct(station_id, .keep_all = TRUE)
 

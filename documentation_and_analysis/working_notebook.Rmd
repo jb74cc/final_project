@@ -18,6 +18,7 @@ library(infer)
 library(sf)
 library(rgeoboundaries)
 library(mapdeck)
+library(raster)
 
 ```
 
@@ -218,6 +219,8 @@ map_data %>%
 ```
 
 ```{r}
+# create a map of journeys specified in the filter() argument, arcs show start and stop points,
+# hovering over an arc shows the elevation difference between start and end points
 library(mapdeck)
 
 set_token("pk.eyJ1IjoiamI3NCIsImEiOiJjbDN4Nm52OGMwZ3pnM2NxdHhlMThxanA0In0.iFNcOguU6rkUQEhGruqSBg")  ## set your mapbox token here
@@ -239,7 +242,7 @@ mapdeck(style = mapdeck_style('dark'), pitch = 45,
     , stroke_width = 3
     , stroke_from = "#F27F1B"
     , stroke_to = "#F27F1B"
-    , tooltip = "end_station_name"
+    , tooltip = "elevation_diff"
   )
 
 #"259", "265", "289", "257", "249", "247", "171", "183", "262", "250", "358", "258"
@@ -646,12 +649,13 @@ hires_2019_clean %>%
   count(start_hour) %>% 
   ggplot() +
   #geom_rect(aes(xmin=0, xmax=7, ymin=0, ymax=Inf), fill = "#F27F1B", alpha = 0.1) +
-  annotate("rect", xmin = 0, xmax = 7, ymin = 0, ymax = Inf, fill = "#FFFB85", alpha = .7) +
-  annotate("rect", xmin = 7, xmax = 9, ymin = 0, ymax = Inf, fill = "#FFE930", alpha = .6) +
-  annotate("rect", xmin = 9, xmax = 17, ymin = 0, ymax = Inf, fill = "#F27F1B", alpha = .4) +
-  annotate("rect", xmin = 17, xmax = 18.5, ymin = 0, ymax = Inf, fill = "#DE6DCC", alpha = .4) +
-  annotate("rect", xmin = 18.5, xmax = 22, ymin = 0, ymax = Inf, fill = "#9D84F5", alpha = .7) +
-  annotate("rect", xmin = 22, xmax = 23, ymin = 0, ymax = Inf, fill = "#5A4FF5", alpha = .9) +
+  # annotate("rect", xmin = 0, xmax = 5, ymin = 0, ymax = Inf, fill = "#5A4FF5", alpha = .9) +
+  # annotate("rect", xmin = 5, xmax = 7, ymin = 0, ymax = Inf, fill = "#FFFB85", alpha = .7) +
+  # annotate("rect", xmin = 7, xmax = 9, ymin = 0, ymax = Inf, fill = "#FFE930", alpha = .6) +
+  # annotate("rect", xmin = 9, xmax = 17, ymin = 0, ymax = Inf, fill = "#F27F1B", alpha = .4) +
+  # annotate("rect", xmin = 17, xmax = 18.5, ymin = 0, ymax = Inf, fill = "#DE6DCC", alpha = .4) +
+  # annotate("rect", xmin = 18.5, xmax = 22, ymin = 0, ymax = Inf, fill = "#9D84F5", alpha = .7) +
+  # annotate("rect", xmin = 22, xmax = 23, ymin = 0, ymax = Inf, fill = "#5A4FF5", alpha = .9) +
   geom_point(aes(start_hour, n), color = "#F27F1B") +
   geom_line(aes(start_hour, n), color = "#F27F1B", alpha = 0.5) +
     labs(x = "\nStart hour",
@@ -668,16 +672,53 @@ hires_2019_clean %>%
         panel.background = element_blank(), 
         axis.line = element_line(colour = "#8C8C8C"))
 ```
+```{r}
+# heatmap of start times
+hires_2019_clean %>% 
+  mutate(start_hour = hour(start_time), .before = 2) %>% 
+  count(start_date, start_hour) %>% 
+  ggplot() +
+  geom_tile(aes(start_date, start_hour, fill = n)) +
+  labs(x = "\nDate",
+       y = "Start time\n",
+       title = "START TIME OF JOURNEYS HEATMAP\n") +
+  scale_fill_viridis_c() +
+  theme_minimal() +
+  theme(title = element_text(size = 12, family="Proxima Nova", face = "bold"),
+        axis.text = element_text(size = 10, family="Proxima Nova", face = "bold", colour = "#8C8C8C"),
+        axis.title.x = element_text(size = 10, colour = "#8C8C8C"),
+        axis.title.y = element_text(size = 10, colour = "#8C8C8C"),
+        panel.grid.major = element_blank(), 
+        panel.grid.minor = element_blank(),
+        panel.background = element_blank(), 
+        axis.line = element_line(colour = "#8C8C8C"))
+```
 
 
 
 ```{r}
 # trying a raster image of elevation
+
+edi <- st_read('../raw_data/Edinburgh_Ward_Boundaries/Edinburgh_Ward_Boundaries.shp', "Edinburgh_Ward_Boundaries")
+
+st_union(edi)
+```
+
+
+```{r}
 ggplot() +
   geom_raster(data = new_elevation_raster, aes(x = x, y = y)) +
-  geom_sf(data = elevation_raster, color = "white") +
+  geom_sf(data = edi, color = "red") +
   coord_sf() +
   scale_fill_viridis_c() +
   labs(title = " ", x = " ", y = " ", fill = " ")
+
+
+
+
+
+plot(elevation_raster, 
+     main = "Elevation levels across Edinburgh in metres",
+     key = "map_data")
 ```
 
