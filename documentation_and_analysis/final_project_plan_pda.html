@@ -2805,38 +2805,54 @@ div.tocify {
 
 
 <div id="just-eat-cycle-hire-scheme" class="section level1">
-<h1>Just Eat Cycle Hire Scheme</h1>
+<h1><span style="color: #F27F1B;">Just Eat Cycle Hire Scheme</span></h1>
 <div id="context" class="section level2">
-<h2>Context</h2>
+<h2><span style="color: #F27F1B;">Context</span></h2>
 <div id="business-intelligence-and-data-driven-decision-making" class="section level4">
 <h4>Business intelligence and data-driven decision making</h4>
-<p>(1.1 Business intelligence and data-driven decision making)</p>
-<p>What insights can the business/organisation gain from your analysis
-and how will your analysis help the business/organisation make better
-decisions?</p>
+<p><em>(1.1 Business intelligence and data-driven decision
+making)</em></p>
+<p>My analysis shows how popular the scheme was in 2019, with just shy
+of 125k journeys being made. I looked in to how the rain affects the
+number of hires, it did have an effect but perhaps not as much as you
+would imagine. I also looked at time of day analysis to establish when
+the bikes were being used. This can be good for the business to make
+sure they have the maximum number of bikes available at peak times. It
+also shows the business the broad use of the scheme throughout the day.
+Look at hires by day of the week was also interesting as it shows the
+demand is pretty constant throughout the week. Analysing the location of
+stations shows which are the most popular start points in the city as
+well as the busiest end points. This can be really helpful to the
+business as it allows the stocking of popular stations at busy times and
+can also show where the majority of bike could end up at the end of the
+day.</p>
 </div>
 <div id="domain-knowledge-and-the-business-context" class="section level4">
 <h4>Domain knowledge and the business context</h4>
-<p>(1.2 Domain knowledge and the business context)</p>
+<p><em>(1.2 Domain knowledge and the business context)</em></p>
 <p>Just Eat Cycles was a bike hire scheme that ran in Edinburgh from
 2018 to 2021. The scheme was operated by a company called Serco with
 Just Eat coming onboard as the sponsor. There was a fleet of 500 pedal
-bikes and 150 eBikes deployed to 164 stations across Edinburgh.
-Customers had the option of paying per ride, per day or taking out an
-annual subscription to use the service. The scheme although popular came
-to an end in September 2021 with Serco citing issues such as vandalism
-of bikes and stations as part of the reason not to continue. Edinburgh
-Council are stiil trying to work out a way to bring the scheme back to
+bikes and 150 eBikes deployed to stations across Edinburgh. Customers
+had the option of paying per ride, per day or taking out an annual
+subscription to use the service. The scheme although popular came to an
+end in September 2021 with Serco citing issues such as vandalism of
+bikes and stations as part of the reason not to continue. Edinburgh
+Council are still trying to work out a way to bring the scheme back to
 the streets.</p>
+<p>I thought I would look at the scheme’s usage across 2019 the first
+full year of operation and also before the pandemic hit. I wanted to see
+how popular the scheme was and what were any key points that could be
+used to help determine future iterations of the scheme.</p>
 </div>
 </div>
 <div id="data" class="section level2">
-<h2>Data</h2>
+<h2><span style="color: #F27F1B;">Data</span></h2>
 <div id="internal-and-external-data-sources" class="section level4">
 <h4>Internal and external data sources</h4>
-<p>(1.4 Internal and external data sources, 2.1 Tools for querying data
-sources,<br />
-4.7 Role of domain knowledge in interpreting analyses)</p>
+<p><em>(1.4 Internal and external data sources, 2.1 Tools for querying
+data sources, 4.7 Role of domain knowledge in interpreting
+analyses)</em></p>
 <p>The data used in this analysis came from the hire scheme detailing
 hires from 2019. It is open data and has obviously been pared back from
 the actual data gathered as it only contains trip dates, start and end
@@ -2853,8 +2869,8 @@ latitude coordinates, pulling the info from aws terrain servers.</p>
 </div>
 <div id="types-of-data" class="section level4">
 <h4>Types of data</h4>
-<p>(2.2 Types of data (categorical and numerical data and their
-sub-types))</p>
+<p><em>(2.2 Types of data (categorical and numerical data and their
+sub-types))</em></p>
 <p>Once I had all my data cleaned and compiled together I was dealing
 with a mixture of date/time variables for the start and end dates and
 times. There were also character variables for station names and
@@ -2864,7 +2880,7 @@ elevations etc. I converted the station ids to factors.</p>
 </div>
 <div id="data-formats" class="section level4">
 <h4>Data formats</h4>
-<p>(2.3 Data formats)</p>
+<p><em>(2.3 Data formats)</em></p>
 <p>The data was supplied in .json format with a separate file for each
 month in 2019. Weather data was downloaded from the web in .csv format
 and the elevation data was scraped from aws as a Spatial Points Data
@@ -2873,25 +2889,25 @@ the rest of the data.</p>
 </div>
 <div id="data-quality-and-bias" class="section level4">
 <h4>Data quality and bias</h4>
-<p>(1.5 Data quality, 2.6 Data quality including data bias)</p>
+<p><em>(1.5 Data quality, 2.6 Data quality including data bias)</em></p>
 <p>The data contained only trip information with no personal info
 included so although a little thin, did not in my opinion contain any
 bias.</p>
 </div>
 </div>
 <div id="ethics" class="section level2">
-<h2>Ethics</h2>
-<p>(1.9 Ethical implications of business requirements, 2.7 Ethical
-issues in data sourcing and extraction)</p>
+<h2><span style="color: #F27F1B;">Ethics</span></h2>
+<p><em>(1.9 Ethical implications of business requirements, 2.7 Ethical
+issues in data sourcing and extraction)</em></p>
 <p>I don’t have any ethical concerns with the capture or use of this
 data as there is no way of identifying an individual from the data, and
 the data was supplied by the organisation involved.</p>
 </div>
 <div id="analysis" class="section level2">
-<h2>Analysis</h2>
+<h2><span style="color: #F27F1B;">Analysis</span></h2>
 <div id="stages-in-the-data-analysis-process" class="section level4">
 <h4>Stages in the data analysis process</h4>
-<p>(1.6 Stages in the data analysis process)</p>
+<p><em>(1.6 Stages in the data analysis process)</em></p>
 <p>The main stages in my data analysis process were intitally to bind
 the 12 monthly data sets together to make one year long set. I then had
 to split the <code>started at</code> variable into
@@ -2910,7 +2926,7 @@ I had pulled from <code>aws</code> at
 </div>
 <div id="tools-for-data-analysis" class="section level4">
 <h4>Tools for data analysis</h4>
-<p>(1.10 Tools for data analysis)</p>
+<p><em>(1.10 Tools for data analysis)</em></p>
 <p>The main tools I used for my analysis were <code>R Studio</code> for
 the importing, cleaning and analysing of the data. I used Chrome to look
 for and access the other data to merege with the original data set. I
@@ -2919,13 +2935,13 @@ presentation and <code>Keynote</code> to put together the slides.</p>
 </div>
 <div id="descriptive-diagnostic-predictive-and-prescriptive-analysis" class="section level4">
 <h4>Descriptive, diagnostic, predictive and prescriptive analysis</h4>
-<p>(1.7 Descriptive, diagnostic, predictive and prescriptive
-analysis)</p>
+<p><em>(1.7 Descriptive, diagnostic, predictive and prescriptive
+analysis)</em></p>
 <p><strong>Descriptive Analytics</strong> were used to understand bike
 hires from 2019. I analysed use by time of day, duration, location. I
 also looked at the relationship between some stations, if journeys were
 A to B or round trips etc.</p>
-<p>I used <strong>Diagnostic Analytics</strong> in the for of a
+<p>I used <strong>Diagnostic Analytics</strong> in the form of a
 Hypothesis Test to determine if weather, specifically rainfall, had an
 effect of bike hires.</p>
 </div>

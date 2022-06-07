@@ -8,8 +8,6 @@ editor_options:
 ```{r include=FALSE}
 # load libraries
 library(tidyverse)
-library(janitor)
-library(here)
 library(lubridate)
 library(leaflet)
 library(elevatr)
@@ -148,7 +146,7 @@ hires_2019_clean %>%
 hires_2019_clean %>% 
   select(end_station_id, end_station_name, end_station_description, end_elevation) %>% 
   count(end_station_id, end_station_name, end_station_description, end_elevation) %>% 
-  arrange(desc(n)) %>%
+  arrange(n) %>%
   head(10)
 ```
 
@@ -193,8 +191,8 @@ hires_2019_clean %>%
 ```{r}
 # map most popular stations data using leaflet app
 map_data %>% 
-  filter(start_station_id %in% c("248", "259", "265", "289", "257", 
-                                 "249", "247", "171", "183", "262", 
+  filter(start_station_id %in% c("248", "259", "265", "289", "257",
+                                 "249", "247", "171", "183", "262",
                                  "250", "358", "258")) %>%
   leaflet() %>% 
   addProviderTiles(providers$CartoDB.Positron) %>% 
@@ -241,6 +239,7 @@ mapdeck(style = mapdeck_style('dark'), pitch = 45,
     , stroke_width = 3
     , stroke_from = "#F27F1B"
     , stroke_to = "#F27F1B"
+    , tooltip = "end_station_name"
   )
 
 #"259", "265", "289", "257", "249", "247", "171", "183", "262", "250", "358", "258"
@@ -331,7 +330,9 @@ hires_2019_clean %>%
 12050 / 124446 * 100
 ```
 ```{r}
-get_elev_raster()
+hires_2019_clean %>% 
+  filter(end_station_longitude >= -3)
+  
 ```
 
 
