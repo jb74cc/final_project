@@ -247,6 +247,22 @@ mapdeck(style = mapdeck_style('dark'), pitch = 45,
 
 #"259", "265", "289", "257", "249", "247", "171", "183", "262", "250", "358", "258"
 ```
+```{r}
+hires_2019_clean %>% 
+filter(start_station_id %in% c("248")) %>% 
+  na.omit() %>% 
+mapdeck(style = mapdeck_style('dark'), pitch = 45,
+        location = c(55.942, -3.199))%>%
+  add_line(
+      layer_id = 'arc_layer'
+    , origin = c("start_station_longitude", "start_station_latitude")
+    , destination = c("end_station_longitude", "end_station_latitude")
+    , stroke_width = 3
+    , stroke_colour  = "#F27F1B"
+    , stroke_opacity  = 0.3
+    , tooltip = "elevation_diff"
+  )
+```
 
 
 ```{r}

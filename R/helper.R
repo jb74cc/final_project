@@ -101,7 +101,7 @@ aws_elev_edi <- get_elev_point(elevation_edi, prj = "EPSG:4326", z = 9, src = "a
 
 
 # creating data for raster
-elevation_raster <- get_elev_raster(locations = aws_elev_edi, z = 9)
+elevation_raster <- get_elev_raster(locations = edi, z = 9, clip = "locations")
 new_elevation_raster <- as.data.frame(elevation_raster, xy = TRUE)
 colnames(new_elevation_raster)[3] <- "elevation"
 #remove rows of data frame with one or more NA's,using complete.cases
