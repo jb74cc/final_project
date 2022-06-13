@@ -1,5 +1,10 @@
 # <span style="color: #F27F1B;">Just Eat Cycle Hire Scheme</span>
 
+![](www/1.png?raw=true "Pres")
+![](www/2.png?raw=true "Pres")
+![](www/3.png?raw=true "Pres")
+![](www/4.png?raw=true "Pres")
+
 CodeClan Professional Data Analysis Course - final project.
 
 Just Eat Cycles was a bike hire scheme that ran in Edinburgh from 2018 to 2021. The scheme was operated by a company called Serco with Just Eat coming onboard as the sponsor. There was a fleet of 500 pedal bikes and 150 eBikes deployed to stations across Edinburgh. Customers had the option of paying per ride, per day or taking out an annual subscription to use the service. The scheme although popular came to an end in September 2021 with Serco citing issues such as vandalism of bikes and stations as part of the reason not to continue. Edinburgh Council are still trying to work out a way to bring the scheme back to the streets.
